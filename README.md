@@ -184,19 +184,6 @@ directly in your browser.
 ---
 
 
-
-🔮 Future Improvements
-
-- [ ] Deploy the application online
-- [ ] Add more laptop specifications
-- [ ] Improve model performance
-- [ ] Add price comparison features
-- [ ] Add more visual analytics
-- [ ] Create a dedicated frontend build
-- [ ] Add automated model retraining
-
----
-
 👩‍💻 Author
 
 Inshra Shaikh

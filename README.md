@@ -181,7 +181,7 @@ http://127.0.0.1:8000/docs
 
 Open:
 
-index-2.html
+index.html
 
 directly in your browser.
 

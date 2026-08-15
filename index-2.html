@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laptop Price Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0B0F14;
+    --panel:#12181F;
+    --panel-2:#161D26;
+    --line:#232B35;
+    --text:#E8EDF2;
+    --muted:#8A96A3;
+    --teal:#4FD1C5;
+    --amber:#F5A623;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;overflow-x:hidden;}
+  #root{min-height:100vh;position:relative;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001s !important; transition-duration:.001s !important;}
+  }
+
+  /* ---- animated background ---- */
+  .bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .bg-grid{
+    position:absolute;inset:-2px;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:42px 42px; opacity:.28;
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 85%);
+            mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 85%);
+  }
+  .glow-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22;}
+  .glow-blob.b1{width:520px;height:520px;background:var(--teal);top:-220px;left:-140px;animation:drift1 22s ease-in-out infinite;}
+  .glow-blob.b2{width:420px;height:420px;background:var(--amber);top:120px;right:-160px;animation:drift2 26s ease-in-out infinite;}
+  @keyframes drift1{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(60px,50px) scale(1.12);}
+  }
+  @keyframes drift2{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(-50px,40px) scale(1.08);}
+  }
+  .scanline{
+    position:absolute;left:0;right:0;height:120px;
+    background:linear-gradient(180deg, transparent, rgba(79,209,197,0.05), transparent);
+    animation:scan 9s linear infinite;
+  }
+  @keyframes scan{
+    0%{ top:-120px; }
+    100%{ top:100%; }
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;}
+
+  .top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:40px;flex-wrap:wrap;gap:12px;
+    opacity:0; animation:riseIn .7s cubic-bezier(.16,1,.3,1) forwards;}
+  .brand{font-family:'IBM Plex Mono',monospace;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .brand span{color:var(--teal);}
+  h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(28px,4vw,40px);font-weight:600;margin:6px 0 0;letter-spacing:-0.01em;
+     background:linear-gradient(100deg, var(--text) 40%, var(--teal) 55%, var(--text) 70%);
+     background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+     animation:shimmerTitle 6s ease-in-out infinite;}
+  @keyframes shimmerTitle{
+    0%{background-position:120% 0;}
+    50%{background-position:0% 0;}
+    100%{background-position:-120% 0;}
+  }
+  .sub{color:var(--muted);font-size:15px;max-width:520px;margin-top:8px;line-height:1.5;}
+
+  @keyframes riseIn{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:start;}
+  @media (max-width: 880px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:28px;
+    opacity:0; animation:riseIn .7s cubic-bezier(.16,1,.3,1) .1s forwards;
+    transition:border-color .3s;
+  }
+  .panel:hover{border-color:#2c3743;}
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--teal);margin:28px 0 14px;display:flex;align-items:center;gap:10px;
+    opacity:0; animation:fadeUp .5s ease forwards;
+  }
+  .section-label:first-child{margin-top:0;}
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+  .section-label:nth-of-type(1){animation-delay:.18s;}
+  .section-label:nth-of-type(2){animation-delay:.30s;}
+  .section-label:nth-of-type(3){animation-delay:.42s;}
+  .section-label:nth-of-type(4){animation-delay:.54s;}
+
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;
+    opacity:0; animation:fadeUp .5s ease forwards; animation-delay:.24s;}
+  .field{display:flex;flex-direction:column;gap:6px;position:relative;}
+  .field.full{grid-column:1 / -1;}
+  label{font-size:12px;color:var(--muted);font-weight:500;transition:color .2s;}
+  select, input{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    padding:10px 12px;border-radius:6px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;
+    outline:none;transition:border-color .2s, box-shadow .2s, transform .12s;
+  }
+  select:hover, input:hover{border-color:#33404c;}
+  select:focus, input:focus{border-color:var(--teal); box-shadow:0 0 0 3px rgba(79,209,197,0.15);}
+  .field:focus-within label{color:var(--teal);}
+
+  .toggle-row{display:flex;gap:20px;margin-top:2px;
+    opacity:0; animation:fadeUp .5s ease forwards; animation-delay:.5s;}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;transition:color .2s;}
+  .toggle:hover{color:var(--text);}
+  .toggle input{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;padding:0;}
+
+  .btn{
+    position:relative;overflow:hidden;
+    margin-top:26px;width:100%;padding:14px;border-radius:7px;border:none;cursor:pointer;
+    background:var(--teal);color:#06201C;font-family:'IBM Plex Mono',monospace;font-weight:600;
+    font-size:14px;letter-spacing:.04em;text-transform:uppercase;transition:filter .15s, transform .1s, box-shadow .3s;
+    opacity:0; animation:fadeUp .5s ease forwards; animation-delay:.62s;
+  }
+  .btn::before{
+    content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.55), transparent);
+    transform:skewX(-20deg); transition:left .55s ease;
+  }
+  .btn:hover::before{left:130%;}
+  .btn:hover{filter:brightness(1.08); box-shadow:0 6px 24px rgba(79,209,197,0.25);}
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{opacity:.6;cursor:not-allowed;}
+  .btn:disabled::before{display:none;}
+
+  .dots-anim{display:inline-flex;gap:4px;margin-left:2px;vertical-align:middle;}
+  .dots-anim span{width:4px;height:4px;border-radius:50%;background:#06201C;display:inline-block;animation:dotPulse 1.1s ease-in-out infinite;}
+  .dots-anim span:nth-child(2){animation-delay:.15s;}
+  .dots-anim span:nth-child(3){animation-delay:.3s;}
+  @keyframes dotPulse{
+    0%,80%,100%{opacity:.25; transform:translateY(0);}
+    40%{opacity:1; transform:translateY(-2px);}
+  }
+
+  .err{margin-top:14px;font-size:13px;color:#FF8A80;font-family:'IBM Plex Mono',monospace;
+    animation:fadeUp .3s ease forwards;}
+
+  /* --- Price ticket --- */
+  .ticket-wrap{position:sticky;top:28px;perspective:1200px;
+    opacity:0; animation:riseIn .7s cubic-bezier(.16,1,.3,1) .2s forwards;}
+  .ticket{
+    position:relative;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:0;overflow:hidden;transform-style:preserve-3d;transition:transform .15s ease-out, border-color .3s, box-shadow .3s;
+  }
+  .ticket.updated{animation:ticketPulse .7s ease;}
+  @keyframes ticketPulse{
+    0%{box-shadow:0 0 0 0 rgba(245,166,35,0);}
+    30%{box-shadow:0 0 40px 4px rgba(245,166,35,0.35);}
+    100%{box-shadow:0 0 0 0 rgba(245,166,35,0);}
+  }
+  .ticket.loading{border-color:var(--teal); animation:borderBreathe 1.4s ease-in-out infinite;}
+  @keyframes borderBreathe{
+    0%,100%{box-shadow:0 0 0 0 rgba(79,209,197,0.0);}
+    50%{box-shadow:0 0 26px 2px rgba(79,209,197,0.25);}
+  }
+
+  .ticket-head{
+    padding:20px 24px;border-bottom:1px dashed var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .ticket-head .t1{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .ticket-head .t2{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal);transition:opacity .2s;}
+
+  .notch{position:absolute;width:22px;height:22px;background:var(--bg);border-radius:50%;top:78px;z-index:2;}
+  .notch.left{left:-11px;}
+  .notch.right{right:-11px;}
+
+  .ticket-body{padding:32px 24px 20px;text-align:center;}
+  .price-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+  .price{
+    font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:56px;color:var(--amber);
+    margin:10px 0 4px;letter-spacing:-0.02em;line-height:1;
+    text-shadow:0 0 24px rgba(245,166,35,0.25);
+    font-variant-numeric:tabular-nums;
+  }
+  .price.placeholder{color:var(--line);font-size:44px;}
+  .price.pop{animation:pricePop .5s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes pricePop{
+    0%{transform:scale(.85); opacity:.4;}
+    60%{transform:scale(1.06);}
+    100%{transform:scale(1); opacity:1;}
+  }
+  .price-note{font-size:12px;color:var(--muted);}
+
+  .barcode{height:34px;margin:22px 24px 0;position:relative;overflow:hidden;background-repeat:repeat-x;background-size:3px 100%;
+    background-image:repeating-linear-gradient(90deg, var(--line) 0 2px, transparent 2px 5px);opacity:.6;}
+  .barcode::after{
+    content:"";position:absolute;top:0;bottom:0;width:26%;
+    background:linear-gradient(90deg, transparent, rgba(79,209,197,0.5), transparent);
+    animation:barcodeScan 3.4s ease-in-out infinite;
+  }
+  @keyframes barcodeScan{
+    0%{left:-30%;}
+    50%{left:104%;}
+    100%{left:-30%;}
+  }
+
+  .specs{padding:20px 24px 26px;}
+  .spec-line{display:flex;align-items:baseline;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;padding:5px 0;
+    opacity:0; animation:fadeUp .4s ease forwards;}
+  .spec-line:nth-child(1){animation-delay:.05s;}
+  .spec-line:nth-child(2){animation-delay:.10s;}
+  .spec-line:nth-child(3){animation-delay:.15s;}
+  .spec-line:nth-child(4){animation-delay:.20s;}
+  .spec-line:nth-child(5){animation-delay:.25s;}
+  .spec-line:nth-child(6){animation-delay:.30s;}
+  .spec-line:nth-child(7){animation-delay:.35s;}
+  .spec-line:nth-child(8){animation-delay:.40s;}
+  .spec-line .k{color:var(--muted);white-space:nowrap;}
+  .spec-line .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-4px);}
+  .spec-line .v{color:var(--text);white-space:nowrap;transition:color .25s;}
+
+  .foot-note{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.6;text-align:center;
+    opacity:0; animation:fadeUp .5s ease forwards; animation-delay:.3s;}
+  .foot-note code{background:var(--panel-2);padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--teal);}
+
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:6px;animation:livePulse 1.6s ease-in-out infinite;}
+  @keyframes livePulse{
+    0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(79,209,197,.5);}
+    50%{opacity:.5; box-shadow:0 0 0 4px rgba(79,209,197,0);}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const API_URL = "http://127.0.0.1:8000/predict";
+
+const COMPANIES = ["Apple","HP","Acer","Asus","Dell","Lenovo","Chuwi","MSI","Microsoft","Toshiba","Huawei","Xiaomi","Vero","Razer","Mediacom","Samsung","Google","Fujitsu","LG"];
+const TYPES = ["Ultrabook","Notebook","Netbook","Gaming","2 in 1 Convertible","Workstation"];
+const OS = ["Windows 10","Windows 10 S","Windows 7","macOS","Mac OS X","Linux","Chrome OS","Android","No OS"];
+const CPU_BRANDS = ["Intel i3","Intel i5","Intel i7","Intel Other","AMD","Other"];
+const GPU_BRANDS = ["Intel","Nvidia","AMD","ARM"];
+
+/* All of these come directly from the real training data — every option here
+   is a value that actually exists in the 1,300+ laptops the model was trained on. */
+const RAM_OPTIONS = [2,4,6,8,12,16,24,32,64];
+const INCHES_OPTIONS = [10.1,11.3,11.6,12.0,12.3,12.5,13.0,13.3,13.5,13.9,14.0,14.1,15.0,15.4,15.6,17.0,17.3,18.4];
+const CPU_SPEED_OPTIONS = [0.9,1.0,1.1,1.2,1.3,1.44,1.5,1.6,1.8,1.9,1.92,2.0,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3.0,3.1,3.2,3.6];
+const SSD_OPTIONS = [0,8,16,32,64,128,180,240,256,512,768,1000,1024];
+const HDD_OPTIONS = [0,32,128,500,1000,2000];
+const WEIGHT_OPTIONS = [0.69,0.92,1.1,1.2,1.3,1.37,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.5,2.7,3.0,3.5,4.0,4.7];
+
+function Field({label, children}) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function useCountUp(target, duration=800){
+  const [display, setDisplay] = useState(target === null ? 0 : target);
+  const prevRef = React.useRef(target === null ? 0 : target);
+  React.useEffect(()=>{
+    if(target === null) return;
+    const from = prevRef.current || 0;
+    const to = target;
+    const start = performance.now();
+    let raf;
+    function tick(now){
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(from + (to - from) * eased);
+      if(p < 1) raf = requestAnimationFrame(tick);
+      else prevRef.current = to;
+    }
+    raf = requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(raf);
+  }, [target]);
+  return display;
+}
+
+function App(){
+  const [form, setForm] = useState({
+    Company: "Dell",
+    TypeName: "Notebook",
+    Inches: 15.6,
+    Ram: 8,
+    OpSys: "Windows 10",
+    Weight: 2.1,
+    SSD: 256,
+    HDD: 0,
+    Flash_Storage: 0,
+    Hybrid: 0,
+    Cpu_speed_GHz: 2.5,
+    Cpu_brand: "Intel i5",
+    Gpu_brand: "Intel",
+    Touchscreen: 0,
+    IPS: 0,
+    ScreenW: 1920,
+    ScreenH: 1080,
+  });
+  const [price, setPrice] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [pulse, setPulse] = useState(false);
+  const ticketRef = React.useRef(null);
+  const displayPrice = useCountUp(price, 900);
+
+  const handleTiltMove = (e) => {
+    const el = ticketRef.current;
+    if(!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.transform = `rotateY(${px*7}deg) rotateX(${-py*7}deg) translateZ(0)`;
+  };
+  const handleTiltLeave = () => {
+    const el = ticketRef.current;
+    if(el) el.style.transform = "rotateY(0deg) rotateX(0deg)";
+  };
+
+  const ppi = useMemo(() => {
+    const x = Number(form.ScreenW), y = Number(form.ScreenH), inches = Number(form.Inches);
+    if(!x || !y || !inches) return 0;
+    return Math.round((Math.sqrt(x*x + y*y) / inches) * 100) / 100;
+  }, [form.ScreenW, form.ScreenH, form.Inches]);
+
+  const update = (key) => (e) => {
+    const val = e.target.type === "checkbox" ? (e.target.checked ? 1 : 0)
+      : (e.target.type === "number" ? e.target.value : e.target.value);
+    setForm(prev => ({...prev, [key]: val}));
+  };
+
+  const submit = async () => {
+    setLoading(true); setError(null);
+    const payload = {
+      Company: form.Company,
+      TypeName: form.TypeName,
+      Inches: Number(form.Inches),
+      Ram: Number(form.Ram),
+      OpSys: form.OpSys,
+      Weight: Number(form.Weight),
+      SSD: Number(form.SSD),
+      HDD: Number(form.HDD),
+      Flash_Storage: Number(form.Flash_Storage),
+      Hybrid: Number(form.Hybrid),
+      Cpu_speed_GHz: Number(form.Cpu_speed_GHz),
+      Cpu_brand: form.Cpu_brand,
+      Gpu_brand: form.Gpu_brand,
+      Touchscreen: Number(form.Touchscreen),
+      IPS: Number(form.IPS),
+      PPI: ppi,
+    };
+    try{
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error("Server responded with an error (" + res.status + ")");
+      const data = await res.json();
+      setPrice(data.predicted_price_euros);
+      setPulse(true);
+      setTimeout(()=>setPulse(false), 700);
+    }catch(err){
+      setError("Could not reach the prediction API. Make sure your FastAPI server (uvicorn app:app --reload) is running at 127.0.0.1:8000.");
+    }finally{
+      setLoading(false);
+    }
+  };
+
+  return (
+    <React.Fragment>
+    <div className="bg-layer">
+      <div className="bg-grid"></div>
+      <div className="glow-blob b1"></div>
+      <div className="glow-blob b2"></div>
+      <div className="scanline"></div>
+    </div>
+    <div className="wrap">
+      <div className="top">
+        <div>
+          <div className="brand">Inshra Shaikh </div>
+          <h1>Laptop Price Estimator</h1>
+          <div className="sub">Configure a laptop's specs and get an instant price estimate from a Gradient Boosting model trained on 1,300+ real listings.</div>
+        </div>
+      </div>
+
+      <div className="grid">
+        <div className="panel">
+          <div className="section-label">Build</div>
+          <div className="field-row">
+            <Field label="Brand">
+              <select value={form.Company} onChange={update("Company")}>
+                {COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Type">
+              <select value={form.TypeName} onChange={update("TypeName")}>
+                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="field-row">
+            <Field label="RAM (GB)">
+              <select value={form.Ram} onChange={update("Ram")}>
+                {RAM_OPTIONS.map(r => <option key={r} value={r}>{r}GB</option>)}
+              </select>
+            </Field>
+            <Field label="Weight (kg)">
+              <select value={form.Weight} onChange={update("Weight")}>
+                {WEIGHT_OPTIONS.map(w => <option key={w} value={w}>{w}kg</option>)}
+              </select>
+            </Field>
+          </div>
+
+          <div className="section-label">Processor &amp; Graphics</div>
+          <div className="field-row">
+            <Field label="CPU brand/tier">
+              <select value={form.Cpu_brand} onChange={update("Cpu_brand")}>
+                {CPU_BRANDS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="CPU speed (GHz)">
+              <select value={form.Cpu_speed_GHz} onChange={update("Cpu_speed_GHz")}>
+                {CPU_SPEED_OPTIONS.map(s => <option key={s} value={s}>{s}GHz</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="field-row">
+            <Field label="GPU brand">
+              <select value={form.Gpu_brand} onChange={update("Gpu_brand")}>
+                {GPU_BRANDS.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </Field>
+            <div/>
+          </div>
+
+          <div className="section-label">Display</div>
+          <div className="field-row">
+            <Field label="Screen size (inches)">
+              <select value={form.Inches} onChange={update("Inches")}>
+                {INCHES_OPTIONS.map(i => <option key={i} value={i}>{i}"</option>)}
+              </select>
+            </Field>
+            <Field label="Resolution">
+              <select
+                value={form.ScreenW + "x" + form.ScreenH}
+                onChange={(e)=>{
+                  const [w,h] = e.target.value.split("x");
+                  setForm(prev=>({...prev, ScreenW:w, ScreenH:h}));
+                }}>
+                <option value="1366x768">1366 x 768</option>
+                <option value="1440x900">1440 x 900</option>
+                <option value="1600x900">1600 x 900</option>
+                <option value="1920x1080">1920 x 1080 (Full HD)</option>
+                <option value="2560x1600">2560 x 1600 (Retina)</option>
+                <option value="2880x1800">2880 x 1800 (Retina)</option>
+                <option value="3840x2160">3840 x 2160 (4K)</option>
+              </select>
+            </Field>
+          </div>
+          <div className="toggle-row">
+            <label className="toggle">
+              <input type="checkbox" checked={!!Number(form.Touchscreen)} onChange={update("Touchscreen")} />
+              Touchscreen
+            </label>
+            <label className="toggle">
+              <input type="checkbox" checked={!!Number(form.IPS)} onChange={update("IPS")} />
+              IPS panel
+            </label>
+          </div>
+
+          <div className="section-label">Storage &amp; OS</div>
+          <div className="field-row">
+            <Field label="SSD (GB)">
+              <select value={form.SSD} onChange={update("SSD")}>
+                {SSD_OPTIONS.map(s => <option key={s} value={s}>{s === 0 ? "None" : s + "GB"}</option>)}
+              </select>
+            </Field>
+            <Field label="HDD (GB)">
+              <select value={form.HDD} onChange={update("HDD")}>
+                {HDD_OPTIONS.map(h => <option key={h} value={h}>{h === 0 ? "None" : h + "GB"}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="field-row">
+            <Field label="Operating system">
+              <select value={form.OpSys} onChange={update("OpSys")}>
+                {OS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </Field>
+            <div/>
+          </div>
+
+          <button className="btn" onClick={submit} disabled={loading}>
+            {loading ? (<React.Fragment>Estimating<span className="dots-anim"><span></span><span></span><span></span></span></React.Fragment>) : "Estimate price"}
+          </button>
+          {error && <div className="err">{error}</div>}
+        </div>
+
+        <div className="ticket-wrap">
+          <div
+            className={"ticket" + (pulse ? " updated" : "") + (loading ? " loading" : "")}
+            ref={ticketRef}
+            onMouseMove={handleTiltMove}
+            onMouseLeave={handleTiltLeave}
+          >
+            <div className="notch left"></div>
+            <div className="notch right"></div>
+            <div className="ticket-head">
+              <div className="t1"><span className="live-dot"></span>Estimate Ticket</div>
+              <div className="t2">PPI {ppi}</div>
+            </div>
+            <div className="ticket-body">
+              <div className="price-label">Estimated price</div>
+              {price !== null ? (
+                <div className={"price" + (pulse ? " pop" : "")}>€{displayPrice.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+              ) : (
+                <div className="price placeholder">€ —.—</div>
+              )}
+              <div className="price-note">based on Gradient Boosting · R² 0.89</div>
+            </div>
+            <div className="barcode"></div>
+            <div className="specs">
+              <div className="spec-line"><span className="k">Brand</span><span className="dots"></span><span className="v">{form.Company}</span></div>
+              <div className="spec-line"><span className="k">Type</span><span className="dots"></span><span className="v">{form.TypeName}</span></div>
+              <div className="spec-line"><span className="k">CPU</span><span className="dots"></span><span className="v">{form.Cpu_brand} · {form.Cpu_speed_GHz}GHz</span></div>
+              <div className="spec-line"><span className="k">GPU</span><span className="dots"></span><span className="v">{form.Gpu_brand}</span></div>
+              <div className="spec-line"><span className="k">RAM</span><span className="dots"></span><span className="v">{form.Ram}GB</span></div>
+              <div className="spec-line"><span className="k">Storage</span><span className="dots"></span><span className="v">{form.SSD}GB SSD{Number(form.HDD)>0 ? " + " + form.HDD + "GB HDD" : ""}</span></div>
+              <div className="spec-line"><span className="k">Display</span><span className="dots"></span><span className="v">{form.Inches}" {form.ScreenW}x{form.ScreenH}</span></div>
+              <div className="spec-line"><span className="k">OS</span><span className="dots"></span><span className="v">{form.OpSys}</span></div>
+            </div>
+          </div>
+          <div className="foot-note">
+            Requires the backend running locally at <code>127.0.0.1:8000</code> (<code>uvicorn app:app --reload</code>)
+          </div>
+        </div>
+      </div>
+    </div>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

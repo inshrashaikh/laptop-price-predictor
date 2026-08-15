@@ -91,9 +91,13 @@ For example:
 
 ---
 
-🗂️ Dataset
+## 📊 Dataset
 
-The model uses a dataset containing 1,303 laptop listings with information including:
+The dataset used for this project was obtained from Kaggle:
+
+🔗 **[Laptop Price Dataset — Kaggle](https://www.kaggle.com/datasets/muhammetvarl/laptop-price)**
+
+It contains **1,303 laptop listings** with specifications such as:
 
 - Brand
 - CPU
@@ -104,7 +108,7 @@ The model uses a dataset containing 1,303 laptop listings with information inclu
 - Weight
 - Price
 
-Dataset: Laptop Price Dataset
+The dataset was cleaned and transformed before being used for model training.
 
 ---
 

@@ -1,12 +1,10 @@
 💻 Laptop Price Predictor
 
 An end-to-end Machine Learning application for predicting laptop prices from technical specifications.
-
-""Python" (https://img.shields.io/badge/Python-3.x-blue?logo=python)" (https://www.python.org/)
-""Scikit Learn" (https://img.shields.io/badge/Scikit--Learn-ML-orange?logo=scikit-learn)" (https://scikit-learn.org/)
-""FastAPI" (https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)" (https://fastapi.tiangolo.com/)
-""React" (https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)" (https://react.dev/)
-
+[![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/)
+[![Scikit-learn](https://img.shields.io/badge/Scikit--Learn-ML-orange?logo=scikit-learn)](https://scikit-learn.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](https://react.dev/)
 ---
 
 🚀 Overview

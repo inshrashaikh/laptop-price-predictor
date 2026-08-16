@@ -9,6 +9,7 @@ An end-to-end Machine Learning application for predicting laptop prices from tec
 
 🚀 Overview
 
+
 Laptop Price Predictor is a full-stack Machine Learning application that estimates the price of a laptop based on specifications such as RAM, CPU, storage, display and other hardware features.
 
 The prediction model is a Gradient Boosting Regressor, tuned using GridSearchCV and trained on 1,303 real laptop listings.

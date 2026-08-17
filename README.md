@@ -45,14 +45,19 @@ Exploratory Analysis
      ↓
 Model Comparison
      ↓
+     
 Hyperparameter Tuning
      ↓
+     
 Gradient Boosting Model
      ↓
+     
 FastAPI Backend
      ↓
+     
 Interactive Web Interface
      ↓
+     
 💰 Predicted Laptop Price
 
 ---

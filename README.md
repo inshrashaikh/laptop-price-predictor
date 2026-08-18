@@ -103,6 +103,8 @@ The dataset used for this project was obtained from Kaggle:
 
 🔗 **[Laptop Price Dataset — Kaggle](https://www.kaggle.com/datasets/muhammetvarl/laptop-price)**
 
+
+
 It contains **1,303 laptop listings** with specifications such as:
 
 - Brand
